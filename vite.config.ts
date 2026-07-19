@@ -7,6 +7,8 @@ export default defineConfig(({ mode }) => {
   if (env.XAI_API_KEY) process.env.XAI_API_KEY = env.XAI_API_KEY;
 
   return {
+    // GitHub Pages project site: https://<user>.github.io/laws/
+    base: mode === "production" ? "/laws/" : "/",
     plugins: [react(), aiCompliancePlugin()],
     server: {
       port: 5173,
@@ -20,3 +22,4 @@ export default defineConfig(({ mode }) => {
     },
   };
 });
+

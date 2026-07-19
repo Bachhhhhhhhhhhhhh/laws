@@ -63,7 +63,8 @@ export function useVanBanData() {
         setLoading(false);
         return;
       }
-      const res = await fetch("/data/van-ban.json");
+      const dataUrl = `${import.meta.env.BASE_URL}data/van-ban.json`;
+      const res = await fetch(dataUrl);
       if (!res.ok) throw new Error(`Không tải được dữ liệu mẫu (${res.status})`);
       const raw = (await res.json()) as Partial<VanBan>[];
       applyList(raw.map(normalizeVanBan), "van-ban.json (export từ Excel)");
@@ -120,7 +121,8 @@ export function useVanBanData() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/data/van-ban.json");
+      const dataUrl = `${import.meta.env.BASE_URL}data/van-ban.json`;
+      const res = await fetch(dataUrl);
       if (!res.ok) throw new Error(`Không tải được dữ liệu mẫu (${res.status})`);
       const raw = (await res.json()) as Partial<VanBan>[];
       applyList(raw.map(normalizeVanBan), "van-ban.json (export từ Excel)");

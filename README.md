@@ -95,7 +95,15 @@ van-ban-doi-chieu/
 └── vite.config.ts
 ```
 
-## Chạy
+## Chạy trên web (GitHub Pages)
+
+Sau khi push `main`, GitHub Actions build & deploy tự động:
+
+**https://bachhhhhhhhhhhhhh.github.io/laws/**
+
+> Lần đầu: Settings → Pages → Source = **GitHub Actions** (workflow `Deploy GitHub Pages`).
+
+## Chạy local
 
 ```bash
 cd van-ban-doi-chieu
