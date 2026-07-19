@@ -110,7 +110,8 @@ export type TabId =
   | "han"
   | "pic"
   | "chat-luong"
-  | "snapshot";
+  | "snapshot"
+  | "ra-soat";
 
 export interface Filters {
   q: string;

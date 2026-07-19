@@ -11,9 +11,11 @@ import { DeadlinePanel } from "./components/DeadlinePanel";
 import { PicPanel } from "./components/PicPanel";
 import { QualityPanel } from "./components/QualityPanel";
 import { SnapshotPanel } from "./components/SnapshotPanel";
+import { CompliancePanel } from "./components/CompliancePanel";
 import { downloadText, exportDoiChieuCsv, exportFullCsv, exportWorkbook } from "./lib/excel";
 
 const TABS: { id: TabId; label: string }[] = [
+  { id: "ra-soat", label: "Rà soát hồ sơ" },
   { id: "tong-quan", label: "Tổng quan" },
   { id: "danh-sach", label: "Danh sách" },
   { id: "doi-chieu", label: "Đối chiếu PH" },
@@ -26,7 +28,7 @@ const TABS: { id: TabId; label: string }[] = [
 
 export default function App() {
   const data = useVanBanData();
-  const [tab, setTab] = useState<TabId>("tong-quan");
+  const [tab, setTab] = useState<TabId>("ra-soat");
   const [selected, setSelected] = useState<DoiChieuKetQua | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -162,12 +164,15 @@ export default function App() {
           ))}
         </nav>
 
+        {tab === "ra-soat" && (
+          <CompliancePanel catalog={data.list} onOpenVanBan={setSelected} />
+        )}
+
         {tab === "tong-quan" && (
           <section className="view">
             <p className="lead">
-              Hệ thống đối chiếu đầy đủ từ <em>Bảng quản lý văn bản pháp luật</em>: mọi cột Excel,
-              so khớp BP cần PH ↔ đã PH ↔ được chia sẻ, hạn phản hồi, chất lượng dữ liệu, workload
-              PIC, và so 2 snapshot Excel.
+              Hệ thống đối chiếu đầy đủ từ <em>Bảng quản lý văn bản pháp luật</em>: rà soát hồ sơ
+              PDF/Word/Excel, so khớp BP cần PH ↔ đã PH, hạn phản hồi, chất lượng DL, PIC, 2 snapshot.
             </p>
             <OverviewCharts results={data.filtered} />
             <div className="panel">
