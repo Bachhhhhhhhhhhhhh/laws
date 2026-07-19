@@ -30,6 +30,15 @@ export async function requestAiComplianceInsight(
     detail: g.detail,
   }));
 
+  const actions = report.actionPlan.items.slice(0, 10).map((a) => ({
+    priority: a.priority,
+    title: a.title,
+    owner: a.owner,
+    timeline: a.timeline,
+    deliverable: a.deliverable,
+    steps: a.steps.map((s) => s.action).slice(0, 4),
+  }));
+
   try {
     const res = await fetch("/api/ai-compliance", {
       method: "POST",
@@ -43,6 +52,8 @@ export async function requestAiComplianceInsight(
         refs: report.detectedRefs,
         topMatches: top,
         gaps,
+        actions,
+        actionHeadline: report.actionPlan.headline,
         excerpt: uploadExcerpt.slice(0, 6000),
       }),
     });

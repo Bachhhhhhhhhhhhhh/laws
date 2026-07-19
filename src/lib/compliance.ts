@@ -1,5 +1,6 @@
 import type { DoiChieuKetQua, VanBan } from "../types";
 import { reconcileOne } from "./reconcile";
+import { buildActionPlan, type ActionPlan } from "./recommendations";
 
 export type RiskLevel = "cao" | "trung_binh" | "thap" | "thong_tin";
 
@@ -43,6 +44,8 @@ export interface ComplianceReport {
   };
   ranking: MatchedVanBan[];
   gaps: GapItem[];
+  /** Kế hoạch hành động chi tiết từ các hạn chế */
+  actionPlan: ActionPlan;
   detectedRefs: string[];
   keywords: string[];
   domains: string[];
@@ -227,6 +230,7 @@ export function analyzeCompliance(
   uploadText: string,
   catalog: VanBan[],
   fileName: string,
+  fileWarnings: string[] = [],
 ): ComplianceReport {
   const refs = extractLegalRefs(uploadText);
   const keywords = uniqueTokens(uploadText, 40);
@@ -400,23 +404,38 @@ export function analyzeCompliance(
   };
   gaps.sort((a, b) => levelOrder[a.level] - levelOrder[b.level] || a.scoreImpact - b.scoreImpact);
 
+  const stats = {
+    relatedCount: related.length,
+    highImpactRelated: highImpact.length,
+    citedCount,
+    uncitedHighImpact: uncitedHigh.length,
+    overdueRelated: overdueRelated.length,
+    draftRelated: draftRelated.length,
+    missingFeedbackRelated: missingFb.length,
+  };
+
+  const actionPlan = buildActionPlan({
+    fileName,
+    grade,
+    score,
+    domains,
+    gaps,
+    ranking: top,
+    stats,
+    detectedRefs: refs,
+    fileWarnings,
+  });
+
   return {
     fileName,
     analyzedAt: new Date().toISOString(),
     overallScore: score,
     grade,
     summary,
-    stats: {
-      relatedCount: related.length,
-      highImpactRelated: highImpact.length,
-      citedCount,
-      uncitedHighImpact: uncitedHigh.length,
-      overdueRelated: overdueRelated.length,
-      draftRelated: draftRelated.length,
-      missingFeedbackRelated: missingFb.length,
-    },
+    stats,
     ranking: top,
     gaps,
+    actionPlan,
     detectedRefs: refs,
     keywords: keywords.slice(0, 25),
     domains,

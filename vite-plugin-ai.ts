@@ -34,30 +34,35 @@ export function aiCompliancePlugin(): Plugin {
             refs: string[];
             topMatches: unknown[];
             gaps: unknown[];
+            actions?: unknown[];
+            actionHeadline?: string;
             excerpt: string;
           };
 
           const prompt = `Bạn là chuyên gia tuân thủ pháp lý doanh nghiệp (Việt Nam).
-Nhiệm vụ: đọc tóm tắt kết quả đối chiếu hồ sơ nội bộ với CSDL văn bản pháp luật, rồi:
-1) Đánh giá nhanh mức độ rủi ro vi phạm / thiếu sót (3-5 câu).
-2) Liệt kê checklist việc cần làm (bullet, ưu tiên).
-3) Chỉ ra tối đa 5 điểm thiếu sót quan trọng nhất (cụ thể, actionable).
+Nhiệm vụ: đọc kết quả đối chiếu hồ sơ với CSDL VBPL + các đề xuất máy đã sinh, rồi:
+1) Đánh giá nhanh rủi ro vi phạm / thiếu sót (3-5 câu).
+2) Bổ sung / tinh chỉnh đề xuất hành động: cụ thể, có owner, có thứ tự ưu tiên, có deliverable.
+3) Chỉ ra tối đa 5 điểm thiếu sót quan trọng nhất và «nên làm gì ngay».
 4) Không bịa số hiệu VB không có trong dữ liệu.
+5) Nếu đề xuất máy đã tốt, khẳng định và chỉ thêm phần còn thiếu.
 
 File: ${body.fileName}
 Điểm rule-based: ${body.score}/100 (hạng ${body.grade})
 Tóm tắt máy: ${body.summary}
+Headline đề xuất: ${body.actionHeadline || ""}
 Chủ đề: ${(body.domains || []).join(", ")}
-Refs phát hiện: ${(body.refs || []).join("; ")}
-Top match JSON: ${JSON.stringify(body.topMatches).slice(0, 5000)}
-Gaps JSON: ${JSON.stringify(body.gaps).slice(0, 4000)}
+Refs: ${(body.refs || []).join("; ")}
+Top match JSON: ${JSON.stringify(body.topMatches).slice(0, 4000)}
+Gaps JSON: ${JSON.stringify(body.gaps).slice(0, 3500)}
+Actions JSON: ${JSON.stringify(body.actions || []).slice(0, 4500)}
 
 Trích đoạn hồ sơ:
 """
-${(body.excerpt || "").slice(0, 5500)}
+${(body.excerpt || "").slice(0, 5000)}
 """
 
-Trả lời bằng tiếng Việt, rõ ràng, chuyên nghiệp.`;
+Trả lời bằng tiếng Việt, rõ ràng, chuyên nghiệp, actionable.`;
 
           const aiRes = await fetch("https://api.x.ai/v1/responses", {
             method: "POST",

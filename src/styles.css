@@ -1206,3 +1206,184 @@ code {
   color: #aebcd0;
   border-color: rgba(139, 155, 176, 0.2);
 }
+
+/* === Action plan / ?? xu?t === */
+.action-plan-panel {
+  border-top: 3px solid var(--primary);
+}
+.action-plan-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.action-plan-head h3 {
+  margin: 0 0 6px;
+}
+.roadmap-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.roadmap-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+.roadmap-card.empty-card {
+  opacity: 0.45;
+}
+.roadmap-count {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+.roadmap-window {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin: 4px 0;
+}
+.roadmap-focus {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.action-priority-block {
+  margin-bottom: 16px;
+}
+.priority-title {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+  padding-left: 10px;
+  border-left: 3px solid var(--border);
+}
+.priority-title.prio-P1_khan { border-left-color: var(--danger); color: #ffb0b5; }
+.priority-title.prio-P2_tuan { border-left-color: var(--warn); color: #ffd789; }
+.priority-title.prio-P3_thang { border-left-color: var(--info); color: #b7dcff; }
+.priority-title.prio-P4_cai_tien { border-left-color: var(--muted); color: var(--muted); }
+.action-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.action-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  overflow: hidden;
+}
+.action-card.prio-P1_khan { border-left: 3px solid var(--danger); }
+.action-card.prio-P2_tuan { border-left: 3px solid var(--warn); }
+.action-card.prio-P3_thang { border-left: 3px solid var(--info); }
+.action-card.prio-P4_cai_tien { border-left: 3px solid var(--muted); }
+.action-card-toggle {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: inherit;
+  padding: 12px 14px;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 10px;
+}
+.action-idx {
+  grid-column: 1;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.action-title {
+  grid-column: 1;
+  font-size: 0.98rem;
+}
+.action-meta {
+  grid-column: 1;
+}
+.action-chevron {
+  grid-row: 1 / span 3;
+  grid-column: 2;
+  align-self: center;
+  color: var(--muted);
+  font-size: 1.1rem;
+}
+.action-body {
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 16px;
+  margin-bottom: 12px;
+}
+.action-grid p {
+  margin: 0 0 4px;
+  font-size: 0.9rem;
+}
+.related-vb-box {
+  margin-bottom: 12px;
+  padding: 10px;
+  background: var(--bg-elev);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.related-vb-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.88rem;
+}
+.action-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.step-label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  cursor: pointer;
+}
+.step-label input {
+  margin-top: 4px;
+}
+.step-action {
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+.step-done-when {
+  font-style: italic;
+}
+.step-done .step-action {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+.checklist-details {
+  margin-top: 14px;
+}
+.checklist-details summary {
+  cursor: pointer;
+  color: var(--info);
+  font-weight: 500;
+}
+.checklist-pre {
+  margin: 10px 0 0;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  overflow: auto;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  max-height: 320px;
+}

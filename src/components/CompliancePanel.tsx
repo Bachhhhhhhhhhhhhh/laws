@@ -9,6 +9,7 @@ import {
 } from "../lib/compliance";
 import { requestAiComplianceInsight, type AiInsight } from "../lib/aiAnalyze";
 import { StatusBadge } from "./StatusBadge";
+import { ActionPlanPanel } from "./ActionPlanPanel";
 import { downloadText } from "../lib/excel";
 
 interface Props {
@@ -47,7 +48,7 @@ export function CompliancePanel({ catalog, onOpenVanBan }: Props) {
       setPhase("scoring");
       // yield UI
       await new Promise((r) => setTimeout(r, 30));
-      const rep = analyzeCompliance(ext.text, catalog, ext.fileName);
+      const rep = analyzeCompliance(ext.text, catalog, ext.fileName, ext.warnings);
       setReport(rep);
       setPhase("done");
     } catch (e) {
@@ -86,6 +87,12 @@ export function CompliancePanel({ catalog, onOpenVanBan }: Props) {
       ...report.gaps.map(
         (g) => `[${RISK_LABEL[g.level]}] ${g.title}\n  ${g.detail}\n  VB: ${g.relatedId || "—"} ${g.relatedName || ""}`,
       ),
+      ``,
+      `=== ĐỀ XUẤT HÀNH ĐỘNG ===`,
+      report.actionPlan.headline,
+      ...report.actionPlan.roadmap.map((r) => `- ${r.window} (${r.count}): ${r.focus}`),
+      ``,
+      ...report.actionPlan.checklist,
       ``,
       `=== RANKING ===`,
       ...report.ranking.map(
@@ -217,8 +224,14 @@ export function CompliancePanel({ catalog, onOpenVanBan }: Props) {
                 <strong>{report.gaps.length}</strong>
                 <span>Điểm thiếu sót</span>
               </div>
+              <div>
+                <strong>{report.actionPlan.items.length}</strong>
+                <span>Việc đề xuất</span>
+              </div>
             </div>
           </section>
+
+          <ActionPlanPanel plan={report.actionPlan} fileName={report.fileName} />
 
           {ai && (
             <section className="panel">
