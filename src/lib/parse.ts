@@ -1,4 +1,4 @@
-import type { VanBan } from "../types";
+import type { LoaiVanBan, VanBan } from "../types";
 
 /** Tách danh sách bộ phận (dấu phẩy / chấm phẩy) */
 export function splitDepts(raw: string | null | undefined): string[] {
@@ -53,6 +53,25 @@ export function todayStart(): Date {
   return new Date(n.getFullYear(), n.getMonth(), n.getDate());
 }
 
+export function daysBetween(a: Date, b: Date): number {
+  return Math.round((a.getTime() - b.getTime()) / 86400000);
+}
+
+export function detectLoaiVanBan(ten: string): LoaiVanBan {
+  const t = (ten || "").toLowerCase();
+  if (/dự\s*thảo|du\s*thao/.test(t)) return "du_thao";
+  if (/nghị\s*định|nghi\s*dinh|nđ-cp|nd-cp/.test(t)) return "nghi_dinh";
+  if (/thông\s*tư|thong\s*tu|tt-/.test(t)) return "thong_tu";
+  if (/quyết\s*định|quyet\s*dinh|qđ-|qd-/.test(t)) return "quyet_dinh";
+  if (/công\s*văn|cong\s*van/.test(t)) return "cong_van";
+  if (/^luật\b|^\s*luat\b|luật\s/.test(t)) return "luat";
+  return "khac";
+}
+
+export function isDuThaoName(ten: string): boolean {
+  return /dự\s*thảo|du\s*thao/i.test(ten || "");
+}
+
 export function normalizeVanBan(raw: Partial<VanBan> | Record<string, unknown>): VanBan {
   const g = (k: string) => {
     const v = (raw as Record<string, unknown>)[k];
@@ -89,4 +108,32 @@ export function normalizeVanBan(raw: Partial<VanBan> | Record<string, unknown>):
     ten_cong_van: g("ten_cong_van"),
     ghi_chu: g("ghi_chu"),
   };
+}
+
+/** Các field quan trọng khi chấm độ đầy đủ hồ sơ */
+export const CORE_FIELDS: (keyof VanBan)[] = [
+  "id",
+  "pic",
+  "ten_van_ban",
+  "tom_tat",
+  "bo_phan_chia_se",
+  "ngay_chia_se",
+  "thoi_han_phan_hoi",
+  "bo_phan_can_phan_hoi",
+  "bo_phan_phan_hoi",
+  "danh_gia_anh_huong",
+  "ngay_ban_hanh",
+  "ngay_hieu_luc",
+];
+
+export function computeCompleteness(vb: VanBan): {
+  score: number;
+  missing: (keyof VanBan)[];
+} {
+  const missing: (keyof VanBan)[] = [];
+  for (const f of CORE_FIELDS) {
+    if (!String(vb[f] ?? "").trim()) missing.push(f);
+  }
+  const score = Math.round(((CORE_FIELDS.length - missing.length) / CORE_FIELDS.length) * 100);
+  return { score, missing };
 }

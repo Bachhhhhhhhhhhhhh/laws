@@ -7,33 +7,29 @@ import { VanBanTable } from "./components/VanBanTable";
 import { BoPhanPanel } from "./components/BoPhanPanel";
 import { OverviewCharts } from "./components/OverviewCharts";
 import { DetailModal } from "./components/DetailModal";
-import { downloadText, exportDoiChieuCsv } from "./lib/excel";
-import { TRANG_THAI_LABEL } from "./lib/reconcile";
-import { formatDate } from "./lib/parse";
+import { DeadlinePanel } from "./components/DeadlinePanel";
+import { PicPanel } from "./components/PicPanel";
+import { QualityPanel } from "./components/QualityPanel";
+import { SnapshotPanel } from "./components/SnapshotPanel";
+import { downloadText, exportDoiChieuCsv, exportFullCsv, exportWorkbook } from "./lib/excel";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "tong-quan", label: "Tổng quan" },
-  { id: "danh-sach", label: "Danh sách VB" },
+  { id: "danh-sach", label: "Danh sách" },
   { id: "doi-chieu", label: "Đối chiếu PH" },
-  { id: "bo-phan", label: "Theo bộ phận" },
+  { id: "han", label: "Hạn PH" },
+  { id: "bo-phan", label: "Bộ phận" },
+  { id: "pic", label: "PIC" },
+  { id: "chat-luong", label: "Chất lượng DL" },
+  { id: "snapshot", label: "2 snapshot" },
 ];
 
 export default function App() {
   const data = useVanBanData();
   const [tab, setTab] = useState<TabId>("tong-quan");
   const [selected, setSelected] = useState<DoiChieuKetQua | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-
-  const doiChieuRows = useMemo(
-    () =>
-      data.filtered.filter(
-        (r) =>
-          r.trangThai !== "khong_yeu_cau" ||
-          r.canPhanHoi.length > 0 ||
-          r.daPhanHoi.length > 0,
-      ),
-    [data.filtered],
-  );
 
   const issueRows = useMemo(
     () =>
@@ -43,21 +39,12 @@ export default function App() {
     [data.filtered],
   );
 
-  const onExport = () => {
-    const csv = exportDoiChieuCsv(
-      data.filtered.map((r) => ({
-        id: r.vanBan.id,
-        ten: r.vanBan.ten_van_ban,
-        pic: r.vanBan.pic,
-        trangThai: TRANG_THAI_LABEL[r.trangThai],
-        thieu: r.thieu.join("; "),
-        thua: r.thua.join("; "),
-        deadline: r.vanBan.thoi_han_phan_hoi || formatDate(r.ngayDeadline),
-        quaHan: r.quaHan ? "Có" : "Không",
-      })),
-    );
-    downloadText(`doi-chieu-van-ban-${new Date().toISOString().slice(0, 10)}.csv`, csv);
-  };
+  const incomplete = useMemo(
+    () => data.filtered.filter((r) => r.missingFields.length > 0).sort((a, b) => a.completeness - b.completeness),
+    [data.filtered],
+  );
+
+  const stamp = () => new Date().toISOString().slice(0, 10);
 
   return (
     <div className="app">
@@ -69,6 +56,7 @@ export default function App() {
             <p className="subtitle">
               Nguồn: <strong>{data.sourceLabel}</strong>
               {data.list.length > 0 ? ` · ${data.list.length} bản ghi` : null}
+              {data.baseline ? ` · Baseline: ${data.baselineLabel}` : null}
             </p>
           </div>
         </div>
@@ -89,11 +77,52 @@ export default function App() {
             Import Excel
           </button>
           <button type="button" className="btn ghost" onClick={() => void data.reload()}>
-            Tải lại mẫu
+            Reset mẫu
           </button>
-          <button type="button" className="btn primary" onClick={onExport} disabled={!data.list.length}>
-            Xuất CSV đối chiếu
-          </button>
+          <div className="export-wrap">
+            <button
+              type="button"
+              className="btn primary"
+              disabled={!data.list.length}
+              onClick={() => setExportOpen((v) => !v)}
+            >
+              Xuất dữ liệu ▾
+            </button>
+            {exportOpen && (
+              <div className="export-menu">
+                <button
+                  type="button"
+                  onClick={() => {
+                    downloadText(
+                      `doi-chieu-${stamp()}.csv`,
+                      exportDoiChieuCsv(data.filtered),
+                    );
+                    setExportOpen(false);
+                  }}
+                >
+                  CSV đối chiếu (lọc hiện tại)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    downloadText(`van-ban-full-${stamp()}.csv`, exportFullCsv(data.list));
+                    setExportOpen(false);
+                  }}
+                >
+                  CSV đầy đủ mọi cột
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    exportWorkbook(data.filtered, `van-ban-doi-chieu-${stamp()}.xlsx`);
+                    setExportOpen(false);
+                  }}
+                >
+                  Excel (.xlsx) 2 sheet
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -104,6 +133,7 @@ export default function App() {
         <FiltersBar
           filters={data.filters}
           onChange={data.setFilters}
+          onReset={data.resetFilters}
           options={data.filterOptions}
         />
 
@@ -118,11 +148,15 @@ export default function App() {
               onClick={() => setTab(t.id)}
             >
               {t.label}
-              {t.id === "doi-chieu" ? (
-                <span className="tab-count">{issueRows.length}</span>
-              ) : null}
+              {t.id === "doi-chieu" ? <span className="tab-count">{issueRows.length}</span> : null}
               {t.id === "danh-sach" ? (
                 <span className="tab-count">{data.filtered.length}</span>
+              ) : null}
+              {t.id === "han" ? (
+                <span className="tab-count">{data.stats.quaHan + data.stats.sapDenHan3}</span>
+              ) : null}
+              {t.id === "chat-luong" ? (
+                <span className="tab-count">{incomplete.length}</span>
               ) : null}
             </button>
           ))}
@@ -131,21 +165,17 @@ export default function App() {
         {tab === "tong-quan" && (
           <section className="view">
             <p className="lead">
-              Website đối chiếu dữ liệu từ <em>Bảng quản lý văn bản pháp luật</em>: so khớp{" "}
-              <strong>Bộ phận cần phản hồi</strong> với <strong>Bộ phận phản hồi</strong>, theo dõi
-              hạn phản hồi, ảnh hưởng và tiến độ theo PIC / bộ phận.
+              Hệ thống đối chiếu đầy đủ từ <em>Bảng quản lý văn bản pháp luật</em>: mọi cột Excel,
+              so khớp BP cần PH ↔ đã PH ↔ được chia sẻ, hạn phản hồi, chất lượng dữ liệu, workload
+              PIC, và so 2 snapshot Excel.
             </p>
             <OverviewCharts results={data.filtered} />
             <div className="panel">
               <h3>Ưu tiên xử lý (thiếu / chưa PH / lệch / quá hạn)</h3>
-              <VanBanTable
-                rows={issueRows.slice(0, 15)}
-                onSelect={setSelected}
-                compact
-              />
-              {issueRows.length > 15 ? (
+              <VanBanTable rows={issueRows.slice(0, 20)} onSelect={setSelected} compact />
+              {issueRows.length > 20 ? (
                 <p className="muted center-note">
-                  Hiển thị 15 / {issueRows.length} — mở tab <strong>Đối chiếu PH</strong> để xem hết.
+                  Hiển thị 20 / {issueRows.length} — mở tab <strong>Đối chiếu PH</strong>.
                 </p>
               ) : null}
             </div>
@@ -156,19 +186,25 @@ export default function App() {
           <section className="view panel">
             <div className="panel-head">
               <h3>Danh sách văn bản ({data.filtered.length})</h3>
+              <p className="muted">Click dòng để xem đủ {Object.keys(data.list[0] ?? {}).length || 22} trường.</p>
             </div>
-            <VanBanTable rows={data.filtered} onSelect={setSelected} />
+            <VanBanTable
+              rows={data.filtered}
+              onSelect={setSelected}
+              sortKey={data.sortKey}
+              sortDir={data.sortDir}
+              onSort={data.toggleSort}
+            />
           </section>
         )}
 
         {tab === "doi-chieu" && (
           <section className="view panel">
             <div className="panel-head">
-              <h3>Đối chiếu phản hồi ({doiChieuRows.length})</h3>
+              <h3>Đối chiếu phản hồi ({issueRows.length} lệch / {data.filtered.length} sau lọc)</h3>
               <p className="muted">
-                Logic: so sánh tập <code>bo_phan_can_phan_hoi</code> và{" "}
-                <code>bo_phan_phan_hoi</code> (tách theo dấu phẩy). Quá hạn khi còn thiếu/chưa PH
-                và <code>thoi_han_phan_hoi</code> &lt; hôm nay.
+                So khớp <code>bo_phan_can_phan_hoi</code> ↔ <code>bo_phan_phan_hoi</code> · Quá hạn khi
+                còn thiếu và <code>thoi_han_phan_hoi</code> &lt; hôm nay.
               </p>
             </div>
             <VanBanTable
@@ -177,10 +213,19 @@ export default function App() {
                   ? data.filtered
                   : issueRows.length
                     ? issueRows
-                    : doiChieuRows
+                    : data.filtered
               }
               onSelect={setSelected}
+              sortKey={data.sortKey}
+              sortDir={data.sortDir}
+              onSort={data.toggleSort}
             />
+          </section>
+        )}
+
+        {tab === "han" && (
+          <section className="view">
+            <DeadlinePanel rows={data.filtered} onSelect={setSelected} />
           </section>
         )}
 
@@ -189,11 +234,37 @@ export default function App() {
             <BoPhanPanel rows={data.boPhanAgg} onOpenVanBan={setSelected} />
           </section>
         )}
+
+        {tab === "pic" && (
+          <section className="view">
+            <PicPanel rows={data.picAgg} onOpenVanBan={setSelected} />
+          </section>
+        )}
+
+        {tab === "chat-luong" && (
+          <section className="view">
+            <QualityPanel
+              fillRates={data.fillRates}
+              incomplete={incomplete}
+              onSelect={setSelected}
+            />
+          </section>
+        )}
+
+        {tab === "snapshot" && (
+          <SnapshotPanel
+            current={data.list}
+            baseline={data.baseline}
+            baselineLabel={data.baselineLabel}
+            onImportBaseline={(f) => void data.importBaseline(f)}
+            onClearBaseline={data.clearBaseline}
+          />
+        )}
       </main>
 
       <footer className="footer">
         <span>
-          Cấu trúc dữ liệu map từ sheet <code>Bang quan ly van ban</code> · React + Vite + TypeScript
+          22 cột Excel · 8 view · import/export · localStorage · React + Vite + TypeScript
         </span>
       </footer>
 

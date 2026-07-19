@@ -1,18 +1,20 @@
 import type { Filters } from "../types";
-import { TRANG_THAI_LABEL } from "../lib/reconcile";
+import { DEADLINE_LABEL, LOAI_VB_LABEL, TRANG_THAI_LABEL } from "../lib/reconcile";
 
 interface Props {
   filters: Filters;
   onChange: (next: Filters) => void;
+  onReset: () => void;
   options: {
     pics: string[];
     thangs: string[];
     tuans: string[];
+    kys: string[];
     depts: string[];
   };
 }
 
-export function FiltersBar({ filters, onChange, options }: Props) {
+export function FiltersBar({ filters, onChange, onReset, options }: Props) {
   const set = <K extends keyof Filters>(key: K, value: Filters[K]) => {
     onChange({ ...filters, [key]: value });
   };
@@ -20,10 +22,10 @@ export function FiltersBar({ filters, onChange, options }: Props) {
   return (
     <div className="filters">
       <div className="filter-field grow">
-        <label>Tìm kiếm</label>
+        <label>Tìm kiếm toàn văn</label>
         <input
           type="search"
-          placeholder="ID, tên VB, tóm tắt, PIC, bộ phận…"
+          placeholder="ID, tên VB, tóm tắt, PIC, bộ phận, công văn…"
           value={filters.q}
           onChange={(e) => set("q", e.target.value)}
         />
@@ -36,6 +38,18 @@ export function FiltersBar({ filters, onChange, options }: Props) {
           {options.pics.map((p) => (
             <option key={p} value={p}>
               {p}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="filter-field">
+        <label>Kỳ</label>
+        <select value={filters.ky} onChange={(e) => set("ky", e.target.value)}>
+          <option value="">Tất cả</option>
+          {options.kys.map((t) => (
+            <option key={t} value={t}>
+              {t}
             </option>
           ))}
         </select>
@@ -60,6 +74,21 @@ export function FiltersBar({ filters, onChange, options }: Props) {
           {options.tuans.map((t) => (
             <option key={t} value={t}>
               {t}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="filter-field">
+        <label>Loại VB</label>
+        <select
+          value={filters.loaiVanBan}
+          onChange={(e) => set("loaiVanBan", e.target.value)}
+        >
+          <option value="">Tất cả</option>
+          {Object.entries(LOAI_VB_LABEL).map(([k, v]) => (
+            <option key={k} value={k}>
+              {v}
             </option>
           ))}
         </select>
@@ -93,6 +122,21 @@ export function FiltersBar({ filters, onChange, options }: Props) {
       </div>
 
       <div className="filter-field">
+        <label>Hạn PH</label>
+        <select
+          value={filters.deadlineBucket}
+          onChange={(e) => set("deadlineBucket", e.target.value)}
+        >
+          <option value="">Tất cả</option>
+          {Object.entries(DEADLINE_LABEL).map(([k, v]) => (
+            <option key={k} value={k}>
+              {v}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="filter-field">
         <label>Bộ phận</label>
         <select value={filters.boPhan} onChange={(e) => set("boPhan", e.target.value)}>
           <option value="">Tất cả</option>
@@ -104,14 +148,43 @@ export function FiltersBar({ filters, onChange, options }: Props) {
         </select>
       </div>
 
-      <label className="filter-check">
-        <input
-          type="checkbox"
-          checked={filters.chiQuaHan}
-          onChange={(e) => set("chiQuaHan", e.target.checked)}
-        />
-        Chỉ quá hạn
-      </label>
+      <div className="filter-checks">
+        <label className="filter-check">
+          <input
+            type="checkbox"
+            checked={filters.chiQuaHan}
+            onChange={(e) => set("chiQuaHan", e.target.checked)}
+          />
+          Quá hạn
+        </label>
+        <label className="filter-check">
+          <input
+            type="checkbox"
+            checked={filters.chiDuThao}
+            onChange={(e) => set("chiDuThao", e.target.checked)}
+          />
+          Dự thảo
+        </label>
+        <label className="filter-check">
+          <input
+            type="checkbox"
+            checked={filters.chiCoFileSoSanh}
+            onChange={(e) => set("chiCoFileSoSanh", e.target.checked)}
+          />
+          Có file so sánh
+        </label>
+        <label className="filter-check">
+          <input
+            type="checkbox"
+            checked={filters.chiThieuTruong}
+            onChange={(e) => set("chiThieuTruong", e.target.checked)}
+          />
+          Thiếu trường core
+        </label>
+        <button type="button" className="btn ghost sm" onClick={onReset}>
+          Xóa lọc
+        </button>
+      </div>
     </div>
   );
 }

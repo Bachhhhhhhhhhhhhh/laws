@@ -1,6 +1,8 @@
 import * as XLSX from "xlsx";
-import type { VanBan } from "../types";
+import type { DoiChieuKetQua, VanBan } from "../types";
+import { VAN_BAN_FIELD_LABELS, VAN_BAN_FIELD_ORDER } from "../types";
 import { normalizeVanBan } from "./parse";
+import { DEADLINE_LABEL, LOAI_VB_LABEL, TRANG_THAI_LABEL } from "./reconcile";
 
 /**
  * Mapping cột Excel (header row 3 + subheader row 4) → field.
@@ -39,7 +41,6 @@ function cellToString(v: unknown): string {
     return `${dd}/${mm}/${v.getFullYear()}`;
   }
   if (typeof v === "number" && v > 20000 && v < 60000) {
-    // Excel serial date
     const epoch = new Date(Date.UTC(1899, 11, 30));
     const d = new Date(epoch.getTime() + v * 86400000);
     const dd = String(d.getUTCDate()).padStart(2, "0");
@@ -63,7 +64,6 @@ export function parseWorkbook(buffer: ArrayBuffer): VanBan[] {
   });
 
   const records: VanBan[] = [];
-  // Row 0: title, 1: blank, 2: headers, 3: sub-headers → data from index 4
   for (let i = 4; i < rows.length; i++) {
     const row = rows[i];
     if (!row || !Array.isArray(row)) continue;
@@ -85,41 +85,6 @@ export async function parseExcelFile(file: File): Promise<VanBan[]> {
   return parseWorkbook(buffer);
 }
 
-/** Xuất CSV đối chiếu */
-export function exportDoiChieuCsv(
-  rows: {
-    id: string;
-    ten: string;
-    pic: string;
-    trangThai: string;
-    thieu: string;
-    thua: string;
-    deadline: string;
-    quaHan: string;
-  }[],
-): string {
-  const header = [
-    "ID",
-    "Tên văn bản",
-    "PIC",
-    "Trạng thái đối chiếu",
-    "BP thiếu",
-    "BP thừa",
-    "Hạn phản hồi",
-    "Quá hạn",
-  ];
-  const escape = (s: string) => `"${String(s).replace(/"/g, '""')}"`;
-  const lines = [
-    header.join(","),
-    ...rows.map((r) =>
-      [r.id, r.ten, r.pic, r.trangThai, r.thieu, r.thua, r.deadline, r.quaHan]
-        .map(escape)
-        .join(","),
-    ),
-  ];
-  return "\uFEFF" + lines.join("\n");
-}
-
 export function downloadText(filename: string, content: string, mime = "text/csv;charset=utf-8") {
   const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
@@ -128,4 +93,124 @@ export function downloadText(filename: string, content: string, mime = "text/csv
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+export function downloadBlob(filename: string, blob: Blob) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Xuất CSV đối chiếu (rút gọn) */
+export function exportDoiChieuCsv(results: DoiChieuKetQua[]): string {
+  const header = [
+    "ID",
+    "Tên văn bản",
+    "PIC",
+    "Kỳ",
+    "Tháng",
+    "Tuần",
+    "Loại VB",
+    "Trạng thái đối chiếu",
+    "BP chia sẻ",
+    "BP cần PH",
+    "BP đã PH",
+    "BP thiếu",
+    "BP thừa",
+    "Hạn phản hồi",
+    "Quá hạn",
+    "Bucket hạn",
+    "Ảnh hưởng",
+    "File so sánh",
+    "Ngày ban hành",
+    "Ngày hiệu lực",
+    "Độ đầy đủ %",
+    "Trường thiếu",
+    "Ghi chú",
+  ];
+  const escape = (s: string) => `"${String(s).replace(/"/g, '""')}"`;
+  const lines = [
+    header.join(","),
+    ...results.map((r) => {
+      const vb = r.vanBan;
+      return [
+        vb.id,
+        vb.ten_van_ban,
+        vb.pic,
+        vb.ky,
+        vb.thang,
+        vb.tuan,
+        LOAI_VB_LABEL[r.loaiVanBan] ?? r.loaiVanBan,
+        TRANG_THAI_LABEL[r.trangThai],
+        r.chiaSe.join("; "),
+        r.canPhanHoi.join("; "),
+        r.daPhanHoi.join("; "),
+        r.thieu.join("; "),
+        r.thua.join("; "),
+        vb.thoi_han_phan_hoi,
+        r.quaHan ? "Có" : "Không",
+        DEADLINE_LABEL[r.deadlineBucket],
+        vb.danh_gia_anh_huong,
+        vb.ngay_gui_file_so_sanh,
+        vb.ngay_ban_hanh,
+        vb.ngay_hieu_luc,
+        String(r.completeness),
+        r.missingFields.map((f) => VAN_BAN_FIELD_LABELS[f]).join("; "),
+        vb.ghi_chu,
+      ]
+        .map(escape)
+        .join(",");
+    }),
+  ];
+  return "\uFEFF" + lines.join("\n");
+}
+
+/** Xuất CSV full mọi cột gốc */
+export function exportFullCsv(list: VanBan[]): string {
+  const header = VAN_BAN_FIELD_ORDER.map((f) => VAN_BAN_FIELD_LABELS[f]);
+  const escape = (s: string) => `"${String(s).replace(/"/g, '""')}"`;
+  const lines = [
+    header.map(escape).join(","),
+    ...list.map((vb) => VAN_BAN_FIELD_ORDER.map((f) => escape(vb[f] ?? "")).join(",")),
+  ];
+  return "\uFEFF" + lines.join("\n");
+}
+
+/** Xuất Excel .xlsx đầy đủ + sheet đối chiếu */
+export function exportWorkbook(results: DoiChieuKetQua[], filename?: string) {
+  const list = results.map((r) => r.vanBan);
+  const fullRows = list.map((vb) => {
+    const row: Record<string, string> = {};
+    for (const f of VAN_BAN_FIELD_ORDER) row[VAN_BAN_FIELD_LABELS[f]] = vb[f] ?? "";
+    return row;
+  });
+
+  const dcRows = results.map((r) => ({
+    ID: r.vanBan.id,
+    "Tên văn bản": r.vanBan.ten_van_ban,
+    PIC: r.vanBan.pic,
+    "Loại VB": LOAI_VB_LABEL[r.loaiVanBan],
+    "Trạng thái": TRANG_THAI_LABEL[r.trangThai],
+    "BP chia sẻ": r.chiaSe.join(", "),
+    "BP cần PH": r.canPhanHoi.join(", "),
+    "BP đã PH": r.daPhanHoi.join(", "),
+    "BP thiếu": r.thieu.join(", "),
+    "BP thừa": r.thua.join(", "),
+    "Hạn PH": r.vanBan.thoi_han_phan_hoi,
+    "Quá hạn": r.quaHan ? "Có" : "Không",
+    "Bucket hạn": DEADLINE_LABEL[r.deadlineBucket],
+    "Ảnh hưởng": r.vanBan.danh_gia_anh_huong,
+    "File so sánh": r.vanBan.ngay_gui_file_so_sanh,
+    "Độ đầy đủ %": r.completeness,
+    "Trường thiếu": r.missingFields.map((f) => VAN_BAN_FIELD_LABELS[f]).join(", "),
+  }));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fullRows), "Du lieu day du");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dcRows), "Doi chieu");
+  const out = filename ?? `van-ban-doi-chieu-${new Date().toISOString().slice(0, 10)}.xlsx`;
+  XLSX.writeFile(wb, out);
 }

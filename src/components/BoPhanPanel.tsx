@@ -15,12 +15,17 @@ export function BoPhanPanel({ rows, onOpenVanBan }: Props) {
     <div className="bophan-list">
       {rows.map((bp) => {
         const doneRate =
-          bp.canPhanHoi === 0 ? 100 : Math.round(((bp.canPhanHoi - bp.thieu) / bp.canPhanHoi) * 100);
+          bp.canPhanHoi === 0
+            ? 100
+            : Math.round(((bp.canPhanHoi - bp.thieu) / bp.canPhanHoi) * 100);
         return (
           <article key={bp.boPhan} className="bophan-card">
             <header className="bophan-header">
               <h3>{bp.boPhan}</h3>
               <div className="bophan-metrics">
+                <span>
+                  Được chia sẻ: <strong>{bp.duocChiaSe}</strong>
+                </span>
                 <span>
                   Cần PH: <strong>{bp.canPhanHoi}</strong>
                 </span>
@@ -39,13 +44,15 @@ export function BoPhanPanel({ rows, onOpenVanBan }: Props) {
             <div className="progress">
               <div className="progress-bar" style={{ width: `${doneRate}%` }} />
             </div>
-            <div className="progress-label">{doneRate}% hoàn thành phản hồi (theo VB được giao)</div>
+            <div className="progress-label">
+              {doneRate}% hoàn thành phản hồi (theo VB được giao)
+            </div>
 
             {bp.vanBanThieu.length > 0 && (
               <details className="bophan-details">
                 <summary>Văn bản còn thiếu phản hồi ({bp.vanBanThieu.length})</summary>
                 <ul>
-                  {bp.vanBanThieu.slice(0, 30).map((r) => (
+                  {bp.vanBanThieu.slice(0, 40).map((r) => (
                     <li key={`${bp.boPhan}-${r.vanBan.id}`}>
                       <button type="button" className="linkish" onClick={() => onOpenVanBan(r)}>
                         <span className="mono">{r.vanBan.id}</span> — {r.vanBan.ten_van_ban}
@@ -53,8 +60,8 @@ export function BoPhanPanel({ rows, onOpenVanBan }: Props) {
                       </button>
                     </li>
                   ))}
-                  {bp.vanBanThieu.length > 30 ? (
-                    <li className="muted">… và {bp.vanBanThieu.length - 30} VB khác</li>
+                  {bp.vanBanThieu.length > 40 ? (
+                    <li className="muted">… và {bp.vanBanThieu.length - 40} VB khác</li>
                   ) : null}
                 </ul>
               </details>
