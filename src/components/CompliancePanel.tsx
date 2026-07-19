@@ -115,7 +115,7 @@ export function CompliancePanel({ catalog, onOpenVanBan }: Props) {
   return (
     <div className="view compliance-view">
       <section className="panel">
-        <h3>Rà soát hồ sơ × Văn bản pháp luật</h3>
+        <h3>BMLG · Rà soát hồ sơ × Văn bản pháp luật</h3>
         <p className="muted">
           Tải lên <strong>PDF / Word (.docx) / Excel / TXT</strong> (hợp đồng, SOP, chính sách, báo
           cáo…). Hệ thống trích text, đối chiếu với <strong>{catalog.length}</strong> VB trong CSDL,

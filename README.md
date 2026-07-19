@@ -1,6 +1,6 @@
-# Đối chiếu Văn bản Pháp luật
+# BMLG
 
-Website **đầy đủ** để đọc, lọc, đối chiếu và xuất dữ liệu từ **Bảng quản lý văn bản pháp luật** (Excel).
+Website **BMLG** — đọc, lọc, đối chiếu và xuất dữ liệu từ **Bảng quản lý văn bản pháp luật** (Excel), rà soát hồ sơ PDF/Word.
 
 ## Dữ liệu mẫu
 

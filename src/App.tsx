@@ -52,11 +52,11 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <div className="brand">
-          <div className="brand-mark">VB</div>
+          <div className="brand-mark">BMLG</div>
           <div>
-            <h1>Đối chiếu Văn bản Pháp luật</h1>
+            <h1>BMLG</h1>
             <p className="subtitle">
-              Nguồn: <strong>{data.sourceLabel}</strong>
+              Đối chiếu văn bản pháp luật · Nguồn: <strong>{data.sourceLabel}</strong>
               {data.list.length > 0 ? ` · ${data.list.length} bản ghi` : null}
               {data.baseline ? ` · Baseline: ${data.baselineLabel}` : null}
             </p>
@@ -269,7 +269,7 @@ export default function App() {
 
       <footer className="footer">
         <span>
-          22 cột Excel · 8 view · import/export · localStorage · React + Vite + TypeScript
+          BMLG · 22 cột Excel · rà soát hồ sơ · import/export · localStorage · React + Vite
         </span>
       </footer>
 
